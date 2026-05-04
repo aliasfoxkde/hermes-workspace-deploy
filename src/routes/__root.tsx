@@ -155,7 +155,7 @@ export const Route = createRootRoute({
       },
       {
         name: 'apple-mobile-web-app-capable',
-        content: 'no',
+        content: 'yes',
       },
     ],
     links: [
