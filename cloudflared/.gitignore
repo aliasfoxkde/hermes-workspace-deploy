@@ -1,0 +1,4 @@
+# Real credentials — DO NOT COMMIT
+hermes-workspace-credentials.json
+*.json
+!*.template.json

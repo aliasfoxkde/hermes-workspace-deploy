@@ -1,0 +1,21 @@
+tunnel: e2d2a958-5981-4db7-8450-4352b94e8908
+credentials-file: /home/debian/.cloudflared/e2d2a958-5981-4db7-8450-4352b94e8908.json
+
+ingress:
+  - hostname: agents.taskwizer.com
+    service: http://127.0.0.1:3001
+    originRequest:
+      noTLSVerify: true
+  - hostname: hermes-workspace.com
+    service: http://127.0.0.1:8080
+    originRequest:
+      noTLSVerify: true
+  - hostname: canvas.taskwizer.com
+    service: http://localhost:3001
+  - hostname: canvas.vibegenie.org
+    service: http://localhost:3001
+  - hostname: vibegenie.org
+    service: http://localhost:3000
+  - hostname: "*.vibegenie.org"
+    service: http://localhost:3000
+  - service: http_status:404
