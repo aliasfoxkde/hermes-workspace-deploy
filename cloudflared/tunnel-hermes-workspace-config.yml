@@ -1,7 +1,9 @@
 tunnel: hermes-workspace
-credentials-file: /root/.cloudflared/hermes-workspace-credentials.json
+credentials-file: /home/debian/.cloudflared/73d6f47a-3383-4f06-a923-dddfc5a99d7d.json
 
 ingress:
   - hostname: agents.taskwizer.com
+    service: http://localhost:3001
+  - hostname: access.cyopsys.com
     service: http://localhost:3001
   - service: http_status:404

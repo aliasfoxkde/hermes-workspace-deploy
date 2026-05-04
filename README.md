@@ -1,77 +1,73 @@
 # Hermes Workspace — Cloudflare Tunnel Deployment
 
-## Overview
+## Architecture
 
 ```
-Internet → Cloudflare CDN/Tunnel → :8080 (Caddy HTTP)
-                                         ↓
-                                    localhost:3001 (React PWA)
-                                    localhost:8642 (Hermes Gateway)
+Internet → Cloudflare CDN → cloudflared Tunnel → :8080 (Caddy HTTP)
+                                                         ↓
+                                                   localhost:3001 (React PWA)
+                                                   localhost:8642 (Hermes Gateway)
 ```
 
 ## Components
 
 | File | Purpose |
 |------|---------|
-| `caddy/Caddyfile` | Reverse proxy config (HTTP :8080, HTTPS :8443) |
-| `cloudflared/config.yml` | System-wide cloudflared tunnel ingress |
-| `cloudflared/tunnel-hermes-workspace-config.yml` | Per-tunnel config for hermes-workspace |
-| `cloudflared/hermes-workspace-credentials.json` | Tunnel credentials (UUID-based) |
-| `systemd/cloudflared.service` | Systemd unit for cloudflared |
+| `caddy/Caddyfile` | Reverse proxy (HTTP :8080, HTTPS :8443) |
+| `cloudflared/tunnel-hermes-workspace-config.yml` | Tunnel ingress config |
+| `cloudflared/hermes-workspace-credentials.json.template` | Credentials template |
+| `systemd/cloudflared-hermes-workspace.service` | Systemd unit |
 | `setup-tunnel.sh` | One-shot setup script |
 | `verify-tunnel.sh` | Verification script |
 
-## Prerequisites
+## Tunnel Info
 
-- Cloudflared installed (`cloudflared version` → confirm)
-- Caddy installed (`caddy version` → confirm)
-- Domain DNS managed by Cloudflare
-- Cloudflare API token with `zone:edit` permission
+- **Tunnel ID:** `73d6f47a-3383-4f06-a923-dddfc5a99d7d`
+- **Connections:** Active (multiple CF edge nodes)
 
-## Quick Setup
+## DNS Setup (REQUIRED — one manual step)
 
-```bash
-# 1. Install cloudflared (if needed)
-curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared
-chmod +x /usr/local/bin/cloudflared
+The API token available does NOT have `zone:edit` permission.
+**You must create these DNS records manually in the Cloudflare dashboard:**
 
-# 2. Install Caddy (if needed)
-apt install -y debian-keyring debian-archive-keyring apt-transport-https
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
-curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | tee /etc/apt/sources.list.d/caddy-stable.list
-apt update && apt install caddy
+### For agents.taskwizer.com
+1. Go to: https://dash.cloudflare.com/090bd34c136b3bb8c23e860746cd5d17/dns/records
+2. Add record:
+   - **Type:** CNAME
+   - **Name:** agents
+   - **Target:** `73d6f47a-3383-4f06-a923-dddfc5a99d7d.cfargotunnel.com`
+   - **Proxy status:** Proxied (orange cloud)
 
-# 3. Run setup
-chmod +x setup-tunnel.sh
-./setup-tunnel.sh
+### For access.cyopsys.com
+1. Go to: https://dash.cloudflare.com/bb97b14529bb02514852f3a7c1bbbb14/dns/records
+2. Add record:
+   - **Type:** CNAME
+   - **Name:** access
+   - **Target:** `73d6f47a-3383-4f06-a923-dddfc5a99d7d.cfargotunnel.com`
+   - **Proxy status:** Proxied (orange cloud)
 
-# 4. Verify
-./verify-tunnel.sh
+## Server Status
+
+```
+✓ hermes-workspace tunnel: ACTIVE (connections: iad03, iad05, iad09, iad12, iad16)
+✓ Caddy :8080: listening (Cloudflare Tunnel entry)
+✓ Caddy :8443: listening (Direct HTTPS)
+✓ Backend localhost:3001: PWA responds 200
+✓ Backend localhost:8642: Gateway API responds 200
+✓ API Bearer token injection: configured
 ```
 
-## DNS Setup
+## Cloudflare API Token Note
 
-The setup script will attempt to create the DNS CNAME record automatically.
-If it fails, create manually in Cloudflare dashboard:
+The token `<REDACTED>` has:
+- `zone:read` ✓
+- `zone:edit` ✗ (missing — cannot create DNS records via API)
 
-| Field | Value |
-|-------|-------|
-| Type | `CNAME` |
-| Name | `agents` |
-| Target | `<tunnel-id>.cfargotunnel.com` |
-| Proxy status | Proxied (orange cloud) |
+To enable API DNS management, create a new token at:
+https://dash.cloudflare.com/profile/api-tokens
+with **Zone → DNS → Edit** permission for the relevant zones.
 
-Get tunnel ID from: `cloudflared tunnel list`
+## Access URLs
 
-## Architecture Notes
-
-- Cloudflare Tunnel provides HTTPS — Caddy receives plain HTTP on :8080
-- Caddy does NOT request its own TLS cert for `agents.taskwizer.com`
-- `hermes-workspace.com` block on :8443 is for direct HTTPS (not used via tunnel)
-- API routes `/v1/*` get Bearer token injected by Caddy before proxying to Gateway
-- SPA routes (all other paths) proxy directly to the React PWA on :3001
-- PWA runs on Vite dev server at localhost:3001
-
-## Mobile Access
-
-PWA is served at `https://agents.taskwizer.com`. Add to home screen on mobile for app-like experience. Service worker registered for offline support.
+- **PWA:** https://agents.taskwizer.com
+- **Alt:** https://access.cyopsys.com

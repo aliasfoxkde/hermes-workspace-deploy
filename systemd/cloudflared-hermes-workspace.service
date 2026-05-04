@@ -1,0 +1,13 @@
+[Unit]
+Description=Cloudflare Tunnel (hermes-workspace)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/cloudflared --no-autoupdate --config /home/debian/.cloudflared/config.yml tunnel run
+Restart=on-failure
+RestartSec=5s
+User=debian
+
+[Install]
+WantedBy=multi-user.target
