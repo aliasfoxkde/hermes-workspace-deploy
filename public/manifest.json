@@ -3,7 +3,7 @@
   "short_name": "Hermes",
   "description": "Native web control surface for Hermes Agent",
   "start_url": "/",
-  "display": "browser",
+  "display": "standalone",
   "background_color": "#0A0E1A",
   "theme_color": "#6366F1",
   "categories": ["productivity", "utilities"],
