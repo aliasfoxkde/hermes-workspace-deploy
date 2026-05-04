@@ -1,0 +1,25 @@
+tunnel: 73d6f47a-3383-4f06-a923-dddfc5a99d7d
+credentials-file: /home/debian/.cloudflared/73d6f47a-3383-4f06-a923-dddfc5a99d7d.json
+
+ingress:
+  - hostname: agents.cyopsys.com
+    service: http://127.0.0.1:3001
+    originRequest:
+      noTLSVerify: true
+  - hostname: agents.taskwizer.com
+    service: http://127.0.0.1:3001
+    originRequest:
+      noTLSVerify: true
+  - hostname: access.cyopsys.com
+    service: http://127.0.0.1:3001
+    originRequest:
+      noTLSVerify: true
+  - hostname: hermes-workspace.com
+    service: http://127.0.0.1:8080
+    originRequest:
+      noTLSVerify: true
+  - hostname: canvas.taskwizer.com
+    service: http://127.0.0.1:3001
+    originRequest:
+      noTLSVerify: true
+  - service: http_status:404
