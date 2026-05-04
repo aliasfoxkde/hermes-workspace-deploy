@@ -315,11 +315,12 @@ function RootLayout() {
       handleOnboardingCompleteChanged,
     )
 
-    void unregisterServiceWorkers({
-      serviceWorker:
-        'serviceWorker' in navigator ? navigator.serviceWorker : undefined,
-      cachesApi: 'caches' in window ? caches : undefined,
-    })
+    // NOTE: SW unregister removed — Vercel serves immutable assets with
+    // content-hashed filenames, so a persistent SW never serves stale files.
+    // The service worker (public/sw.js) handles caching safely.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {/* SW optional */})
+    }
 
     return () => {
       window.removeEventListener('storage', handleStorage)
