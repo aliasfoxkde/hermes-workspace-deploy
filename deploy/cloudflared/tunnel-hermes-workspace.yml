@@ -1,0 +1,7 @@
+tunnel: hermes-workspace
+credentials-file: /root/.cloudflared/hermes-workspace-credentials.json
+
+ingress:
+  - hostname: agents.taskwizer.com
+    service: http://localhost:3001
+  - service: http_status:404

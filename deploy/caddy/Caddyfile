@@ -1,0 +1,130 @@
+# ============================================================
+# Hermes Workspace — Reverse Proxy Config
+#
+# Entry points:
+#   :8080  — Cloudflare Tunnel HTTP (cloudflared proxies HTTPS traffic here)
+#   :8443  — Direct HTTPS via Let's Encrypt (hermes-workspace.com)
+# ============================================================
+
+# --- Cloudflare Tunnel entry (HTTP, :8080) ---
+:8080 {
+	@health {
+		path /.well-known/health-check
+	}
+	respond @health "ok" 200
+
+	@spa_static {
+		path_regexp \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf|map|json)$
+	}
+	reverse_proxy @spa_static 127.0.0.1:3001
+
+	@api {
+		path /v1/*
+	}
+	reverse_proxy @api http://127.0.0.1:8642 {
+		header_up Authorization "Bearer da949d70d18280da2d703a02fba6e7f4b8c0b5d9d9e6331120412e38ec209e75"
+	}
+
+	reverse_proxy /* 127.0.0.1:3001
+
+	@sw {
+		path /sw.js
+	}
+	header @sw Content-Type "application/javascript; charset=utf-8"
+	header @sw Cache-Control "no-cache, no-store, must-revalidate"
+	header @sw Service-Worker-Allowed "/"
+
+	@manifest {
+		path /manifest.json
+	}
+	header @manifest Content-Type "application/manifest+json; charset=utf-8"
+	header @manifest Cache-Control "no-cache"
+
+	log {
+		output file /home/debian/.local/share/caddy/hermes-workspace.log
+	}
+
+	encode gzip zstd
+}
+
+# --- agents.taskwizer.com (Cloudflare Tunnel) ---
+agents.taskwizer.com:8080 {
+	@health {
+		path /.well-known/health-check
+	}
+	respond @health "ok" 200
+
+	@spa_static {
+		path_regexp \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf|map|json)$
+	}
+	reverse_proxy @spa_static 127.0.0.1:3001
+
+	@api {
+		path /v1/*
+	}
+	reverse_proxy @api http://127.0.0.1:8642 {
+		header_up Authorization "Bearer da949d70d18280da2d703a02fba6e7f4b8c0b5d9d9e6331120412e38ec209e75"
+	}
+
+	reverse_proxy /* 127.0.0.1:3001
+
+	@sw {
+		path /sw.js
+	}
+	header @sw Content-Type "application/javascript; charset=utf-8"
+	header @sw Cache-Control "no-cache, no-store, must-revalidate"
+	header @sw Service-Worker-Allowed "/"
+
+	@manifest {
+		path /manifest.json
+	}
+	header @manifest Content-Type "application/manifest+json; charset=utf-8"
+	header @manifest Cache-Control "no-cache"
+
+	log {
+		output file /home/debian/.local/share/caddy/hermes-workspace-https.log
+	}
+
+	encode gzip zstd
+}
+
+# --- Direct HTTPS entry (port 8443 for hermes-workspace.com) ---
+hermes-workspace.com:8443 {
+	@health {
+		path /.well-known/health-check
+	}
+	respond @health "ok" 200
+
+	@spa_static {
+		path_regexp \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf|map|json)$
+	}
+	reverse_proxy @spa_static 127.0.0.1:3001
+
+	@api {
+		path /v1/*
+	}
+	reverse_proxy @api http://127.0.0.1:8642 {
+		header_up Authorization "Bearer da949d70d18280da2d703a02fba6e7f4b8c0b5d9d9e6331120412e38ec209e75"
+	}
+
+	reverse_proxy /* 127.0.0.1:3001
+
+	@sw {
+		path /sw.js
+	}
+	header @sw Content-Type "application/javascript; charset=utf-8"
+	header @sw Cache-Control "no-cache, no-store, must-revalidate"
+	header @sw Service-Worker-Allowed "/"
+
+	@manifest {
+		path /manifest.json
+	}
+	header @manifest Content-Type "application/manifest+json; charset=utf-8"
+	header @manifest Cache-Control "no-cache"
+
+	log {
+		output file /home/debian/.local/share/caddy/hermes-workspace-https.log
+	}
+
+	encode gzip zstd
+}
