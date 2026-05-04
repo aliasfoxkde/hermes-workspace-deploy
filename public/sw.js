@@ -1,24 +1,47 @@
-// Hermes Workspace Service Worker — DISABLED
-// Unregisters itself and clears all caches to prevent stale asset issues
-// after Docker image updates or reverse proxy deployments.
+const CACHE_NAME = 'hermes-workspace-v1';
+const STATIC_ASSETS = [
+  '/',
+  '/manifest.json',
+  '/claude-icon-192.png',
+  '/claude-icon-512.png',
+];
 
-self.addEventListener('install', () => {
-  self.skipWaiting()
-})
+self.addEventListener('install', (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+      .then(() => self.skipWaiting())
+  );
+});
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches
-      .keys()
-      .then((names) => Promise.all(names.map((name) => caches.delete(name))))
-      .then(() => self.clients.claim())
-      .then(() => {
-        // Tell all open tabs to reload so they get fresh assets
-        self.clients.matchAll({ type: 'window' }).then((clients) => {
-          clients.forEach((client) => client.navigate(client.url))
-        })
-      }),
-  )
-})
+    caches.keys().then((names) =>
+      Promise.all(names.filter((n) => n !== CACHE_NAME).map((n) => caches.delete(n)))
+    ).then(() => self.clients.claim())
+  );
+});
 
-// Don't intercept any fetches — let the browser/server handle everything
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  const url = new URL(request.url);
+
+  if (request.method !== 'GET') return;
+  if (url.origin !== location.origin) return;
+
+  if (url.pathname.startsWith('/api')) {
+    event.respondWith(fetch(request));
+    return;
+  }
+
+  event.respondWith(
+    caches.open(CACHE_NAME).then(async (cache) => {
+      const cached = await cache.match(request);
+      const networkFetch = fetch(request).then((res) => {
+        if (res.ok) cache.put(request, res.clone());
+        return res;
+      }).catch(() => null);
+
+      return cached || (await networkFetch);
+    })
+  );
+});
