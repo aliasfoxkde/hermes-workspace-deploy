@@ -1433,3 +1433,106 @@ code {
       border-radius 0.3s ease;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════
+   MOBILE-FIRST CHAT IMPROVEMENTS
+   Reduced font sizes, full width, compact spacing for mobile devices
+   ════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 767px) {
+  /* Full width chat content on mobile */
+  [data-chat-width='default'],
+  [data-chat-width='wide'],
+  [data-chat-width='full'] {
+    --chat-content-max-width: 100% !important;
+  }
+
+  /* Reduce message font sizes */
+  .chat-message-text {
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Compact message spacing */
+  .chat-message-list > div {
+    gap: 8px !important;
+  }
+
+  /* Smaller thinking and tool card text */
+  .tui-activity-card,
+  [data-tui-activity] {
+    font-size: 11px !important;
+  }
+
+  /* Compact tool rows */
+  .tool-row {
+    font-size: 11px !important;
+    padding: 6px 8px !important;
+  }
+
+  /* Reduce thinking bubble */
+  .thinking-summary {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+  }
+
+  /* Full width composer on mobile */
+  .composer-wrapper {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  /* Compact header */
+  .chat-header {
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+  }
+
+  /* Reduce markdown content spacing */
+  .markdown-content p {
+    margin-bottom: 8px !important;
+    line-height: 1.5 !important;
+  }
+
+  .markdown-content h1,
+  .markdown-content h2,
+  .markdown-content h3 {
+    margin-top: 12px !important;
+    margin-bottom: 6px !important;
+  }
+
+  /* Compact code blocks */
+  .code-block pre {
+    font-size: 11px !important;
+    padding: 8px !important;
+  }
+
+  /* Reduce avatar size on mobile */
+  .message-avatar {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Compact message bubble padding */
+  .message-bubble {
+    padding: 8px 12px !important;
+  }
+}
+
+/* Force full width on all chat content for mobile */
+@media (max-width: 767px) {
+  :root {
+    --chat-content-max-width: 100%;
+  }
+
+  .chat-container {
+    max-width: 100% !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  .message-item {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+}

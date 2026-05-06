@@ -63,25 +63,34 @@ export function resolveClaudeAgentDir(
   }
 
   const workspaceRoot = dirname(resolve('.'))
+
+  // Hermes source installs (NousResearch/hermes-agent)
   candidates.push(
     resolve(workspaceRoot, 'hermes-agent'),          // sibling (old README)
     resolve(workspaceRoot, '..', 'hermes-agent'),    // one level up
     resolve(homedir(), '.hermes', 'hermes-agent'),   // Nous installer default
     resolve(homedir(), 'hermes-agent'),              // ~/hermes-agent
+    resolve(homedir(), 'repos', 'Hermes'),           // /home/user/repos/Hermes
+    resolve(workspaceRoot, 'repos', 'Hermes'),      // workspace/repos/Hermes
+    resolve('/home/debian', 'repos', 'Hermes'),      // known install path
   )
 
   for (const candidate of candidates) {
-    if (existsSync(resolve(candidate, 'webapi'))) return candidate
+    // Hermes uses 'gateway/' subdirectory; older installs used 'webapi/'
+    if (existsSync(resolve(candidate, 'gateway')) || existsSync(resolve(candidate, 'webapi'))) {
+      return candidate
+    }
   }
 
   return null
 }
 
-/** Find the `claude` CLI binary installed by Nous's installer (or on PATH). */
+/** Find the `hermes` CLI binary installed by Nous's installer (or on PATH). */
 export function resolveClaudeBinary(): string | null {
   const candidates = [
-    resolve(homedir(), '.claude', 'bin', 'claude'),
-    resolve(homedir(), '.local', 'bin', 'claude'),
+    resolve(homedir(), '.claude', 'bin', 'hermes'),
+    resolve(homedir(), '.local', 'bin', 'hermes'),
+    resolve(homedir(), '.local', 'bin', 'claude'), // backward compat
   ]
   for (const c of candidates) {
     if (existsSync(c)) return c

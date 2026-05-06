@@ -3,6 +3,46 @@ import { BEARER_TOKEN, CLAUDE_API } from '../../../server/gateway-capabilities'
 import { isAuthenticated } from '../../../server/auth-middleware'
 
 /**
+ * Model name translation map.
+ * Maps workspace model names to TaskWizer backend model names.
+ * TaskWizer uses abstract model names: lite, pro, ultra, coding, vision, etc.
+ */
+const MODEL_TRANSLATION: Record<string, string> = {
+  'MiniMax-M2.7': 'pro',
+  'MiniMax-M2.7-Lightning': 'lite',
+  'minimax/MiniMax-M2.7': 'pro',
+  'minimax/MiniMax-M2.7-Lightning': 'lite',
+  // Ollama models
+  'qwen3-coder-30b-fixed:latest': 'coding',
+  'qwen3-14b-fixed:latest': 'lite',
+  'deepseek-r1-32b-fixed:latest': 'ultra',
+  // OpenAI models
+  'gpt-4.5': 'ultra',
+  'gpt-4': 'pro',
+  'gpt-3.5-turbo': 'lite',
+  // Claude models
+  'claude-opus-4-7': 'ultra',
+  'claude-opus-4-6': 'pro',
+  'claude-sonnet-4-6': 'pro',
+  'claude-sonnet-4-5': 'lite',
+}
+
+/**
+ * Translate model name in request body from workspace format to backend format.
+ */
+function translateModelName(body: string): string {
+  try {
+    const parsed = JSON.parse(body)
+    if (parsed.model && MODEL_TRANSLATION[parsed.model]) {
+      parsed.model = MODEL_TRANSLATION[parsed.model]
+    }
+    return JSON.stringify(parsed)
+  } catch {
+    return body
+  }
+}
+
+/**
  * Vanilla hermes-agent (any version through 2026-05) does not expose
  * `/api/available-models` — that's a legacy fork-only endpoint. When the
  * proxy gets a 404, synthesize a compatible response from `/v1/models`
@@ -67,7 +107,8 @@ async function proxyRequest(request: Request, splat: string) {
   }
 
   if (!['GET', 'HEAD'].includes(request.method.toUpperCase())) {
-    init.body = await request.text()
+    const bodyText = await request.text()
+    init.body = translateModelName(bodyText)
   }
 
   const upstream = await fetch(targetUrl, init)

@@ -3,29 +3,25 @@
 #
 # Entry points:
 #   :8080  — Cloudflare Tunnel HTTP (cloudflared proxies HTTPS traffic here)
-#   :8443  — Direct HTTPS via Let's Encrypt (hermes-workspace.com)
+#   :8443  — Direct HTTPS via Let's Encrypt (all domain names)
 # ============================================================
 
 # --- Cloudflare Tunnel entry (HTTP, :8080) ---
+# Routes all tunnel traffic to the Hermes workspace dev server on :3000
 :8080 {
-	@health {
-		path /.well-known/health-check
-	}
-	respond @health "ok" 200
-
 	@spa_static {
 		path_regexp \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf|map|json)$
 	}
-	reverse_proxy @spa_static 127.0.0.1:3001
+	reverse_proxy @spa_static 127.0.0.1:3000
 
 	@api {
 		path /v1/*
 	}
-	reverse_proxy @api http://127.0.0.1:8642 {
+	reverse_proxy @api http://127.0.0.1:9180 {
 		header_up Authorization "Bearer da949d70d18280da2d703a02fba6e7f4b8c0b5d9d9e6331120412e38ec209e75"
 	}
 
-	reverse_proxy /* 127.0.0.1:3001
+	reverse_proxy /* 127.0.0.1:3000
 
 	@sw {
 		path /sw.js
@@ -47,8 +43,8 @@
 	encode gzip zstd
 }
 
-# --- agents.taskwizer.com (Cloudflare Tunnel) ---
-agents.taskwizer.com:8080 {
+# --- Direct HTTPS entry (port 8443 for multiple hostnames) ---
+:8443 {
 	@health {
 		path /.well-known/health-check
 	}
@@ -57,16 +53,16 @@ agents.taskwizer.com:8080 {
 	@spa_static {
 		path_regexp \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf|map|json)$
 	}
-	reverse_proxy @spa_static 127.0.0.1:3001
+	reverse_proxy @spa_static 127.0.0.1:3000
 
 	@api {
 		path /v1/*
 	}
-	reverse_proxy @api http://127.0.0.1:8642 {
+	reverse_proxy @api http://127.0.0.1:9180 {
 		header_up Authorization "Bearer da949d70d18280da2d703a02fba6e7f4b8c0b5d9d9e6331120412e38ec209e75"
 	}
 
-	reverse_proxy /* 127.0.0.1:3001
+	reverse_proxy /* 127.0.0.1:3000
 
 	@sw {
 		path /sw.js
@@ -88,42 +84,61 @@ agents.taskwizer.com:8080 {
 	encode gzip zstd
 }
 
-# --- Direct HTTPS entry (port 8443 for hermes-workspace.com) ---
+# --- Named HTTPS hosts (Cloudflare proxies HTTPS to browsers; Caddy receives plain HTTP)
+# Note: Pre-compressed Brotli (.br) assets are built by Vite and served here.
+# Brotli is NOT decompressed by cloudflared, so it passes through unchanged.
+agents.taskwizer.com {
+	@spa_static {
+		path_regexp \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf|map|json)$
+	}
+	reverse_proxy @spa_static 127.0.0.1:3000
+
+	@api {
+		path /v1/*
+	}
+	reverse_proxy @api http://127.0.0.1:9180 {
+		header_up Authorization "Bearer da949d70d18280da2d703a02fba6e7f4b8c0b5d9d9e6331120412e38ec209e75"
+	}
+
+	# Dynamic gzip+zstd (Caddy has these encoders compiled in).
+	# cloudflared decompresses gzip/zstd transparently before forwarding to browsers.
+	# Cloudflare Edge handles Brotli for end-users automatically.
+	encode gzip zstd
+
+	reverse_proxy /* 127.0.0.1:3000
+}
+
 hermes-workspace.com:8443 {
 	@health {
 		path /.well-known/health-check
 	}
 	respond @health "ok" 200
+	reverse_proxy /* 127.0.0.1:3000
+}
 
-	@spa_static {
-		path_regexp \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf|map|json)$
-	}
-	reverse_proxy @spa_static 127.0.0.1:3001
+# --- TaskWizer Sandbox (DHCE Projects) ---
+# Serves 1255+ AI-generated projects from /home/debian/sandbox
+:9010 {
+	root * /home/debian/sandbox
+	file_server browse
 
-	@api {
-		path /v1/*
+	@html {
+		path *.html
 	}
-	reverse_proxy @api http://127.0.0.1:8642 {
-		header_up Authorization "Bearer da949d70d18280da2d703a02fba6e7f4b8c0b5d9d9e6331120412e38ec209e75"
-	}
+	header @html Content-Type "text/html; charset=utf-8"
 
-	reverse_proxy /* 127.0.0.1:3001
-
-	@sw {
-		path /sw.js
+	@static {
+		path_regexp \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|otf|map|json|ico)$
 	}
-	header @sw Content-Type "application/javascript; charset=utf-8"
-	header @sw Cache-Control "no-cache, no-store, must-revalidate"
-	header @sw Service-Worker-Allowed "/"
+	header @static Cache-Control "public, max-age=3600"
 
-	@manifest {
-		path /manifest.json
+	@html_nocache {
+		path *.html
 	}
-	header @manifest Content-Type "application/manifest+json; charset=utf-8"
-	header @manifest Cache-Control "no-cache"
+	header @html_nocache Cache-Control "no-cache, no-store, must-revalidate"
 
 	log {
-		output file /home/debian/.local/share/caddy/hermes-workspace-https.log
+		output file /home/debian/.local/share/caddy/sandbox.log
 	}
 
 	encode gzip zstd

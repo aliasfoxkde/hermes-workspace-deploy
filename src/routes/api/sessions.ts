@@ -14,7 +14,7 @@ import {
   updateSession,
 } from '../../server/claude-api'
 import { createCapabilityUnavailablePayload } from '@/lib/feature-gates'
-import { deleteLocalSession, getLocalSession, listLocalSessions } from '../../server/local-session-store'
+import { deleteLocalSession, getLocalSession, getOrDeriveTitle, listLocalSessions } from '../../server/local-session-store'
 
 export const Route = createFileRoute('/api/sessions')({
   server: {
@@ -46,7 +46,7 @@ export const Route = createFileRoute('/api/sessions')({
               gatewaySessions.push({
                 key: ls.id,
                 id: ls.id,
-                title: ls.title || 'Local Chat',
+                title: getOrDeriveTitle(ls.id),
                 startedAt: ls.createdAt,
                 updatedAt: ls.updatedAt,
                 message_count: ls.messageCount,

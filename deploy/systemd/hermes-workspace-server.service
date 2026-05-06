@@ -1,0 +1,22 @@
+[Unit]
+Description=Hermes Workspace SSR Server
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/node /home/debian/hermes-workspace/server-entry.js
+Restart=on-failure
+RestartSec=5s
+User=debian
+Group=debian
+EnvironmentFile=/home/debian/hermes-workspace/.env
+Environment="PORT=3001"
+Environment="HOST=127.0.0.1"
+WorkingDirectory=/home/debian/hermes-workspace
+StandardOutput=journal
+StandardError=journal
+# Increase memory limit for large workspace apps
+Environment="NODE_OPTIONS=--max-old-space-size=2048"
+
+[Install]
+WantedBy=multi-user.target

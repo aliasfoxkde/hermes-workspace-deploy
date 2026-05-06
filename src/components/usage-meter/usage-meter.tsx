@@ -459,6 +459,12 @@ export function UsageMeter() {
   }>({ open: false, threshold: 0 })
   const alertStateRef = useRef(getAlertState())
 
+  // Track error dismissals to avoid spamming toasts
+  const errorDismissalRef = useRef<{ lastError: string | null; lastToastAt: number }>({
+    lastError: null,
+    lastToastAt: 0,
+  })
+
   const refresh = useCallback(async () => {
     try {
       const res = await fetch('/api/session-status')
@@ -473,10 +479,26 @@ export function UsageMeter() {
       const parsed = parseSessionStatus(payload)
       setUsage(parsed)
       setError(null)
+      // Reset error dismissal tracking on success
+      errorDismissalRef.current = { lastError: null, lastToastAt: 0 }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : String(err)
       setError(errorMessage)
-      toast('Failed to fetch usage data', { type: 'error' })
+      // Only show toast if error changed and not a transient network error
+      // Avoid spamming toasts for polling failures - show at most once per unique error per minute
+      const now = Date.now()
+      const { lastError, lastToastAt } = errorDismissalRef.current
+      const isNetworkError = errorMessage.includes('fetch') || errorMessage.includes('network') || errorMessage.includes('Failed to')
+      const isTransientError = errorMessage.includes('503') || errorMessage.includes('timed out') || errorMessage.includes('Service')
+
+      if (
+        (lastError !== errorMessage || now - lastToastAt > 60000) &&
+        !isNetworkError &&
+        !isTransientError
+      ) {
+        errorDismissalRef.current = { lastError: errorMessage, lastToastAt: now }
+        toast('Failed to fetch usage data', { type: 'error' })
+      }
     }
   }, [])
 

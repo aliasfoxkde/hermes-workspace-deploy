@@ -3,6 +3,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import {
   BrainIcon,
   Chat01Icon,
+  CheckListIcon,
   Clock01Icon,
   CommandLineIcon,
   DashboardSquare01Icon,
@@ -11,6 +12,7 @@ import {
   PuzzleIcon,
   Settings01Icon,
   UserGroupIcon,
+  ViewAgendaIcon,
 } from '@hugeicons/core-free-icons'
 import {
   useCallback,
@@ -78,6 +80,13 @@ export const MOBILE_NAV_TABS: Array<TabItem> = [
     icon: Clock01Icon,
     to: '/jobs',
     match: (p) => p.startsWith('/jobs'),
+  },
+  {
+    id: 'board',
+    label: 'Board',
+    icon: ViewAgendaIcon,
+    to: '/kanban',
+    match: (p) => p.startsWith('/kanban'),
   },
   {
     id: 'swarm',

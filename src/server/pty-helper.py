@@ -5,7 +5,14 @@ Spawns a real PTY process and bridges stdin/stdout.
 Usage: python3 pty-helper.py [cwd] [cols] [rows] -- [command arg1 arg2 ...]
 If no command is provided, falls back to an interactive shell.
 """
-import sys, os, pty, select, signal, struct, fcntl, termios
+import sys
+import os
+import pty
+import select
+import signal
+import struct
+import fcntl
+import termios
 
 def set_winsize(fd, rows, cols):
     s = struct.pack('HHHH', rows, cols, 0, 0)

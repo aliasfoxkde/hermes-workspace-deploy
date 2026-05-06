@@ -119,14 +119,14 @@ function ToolRow({
   const arg = formatArg(section.type, section.input)
   const argLabel = section.preview ?? arg ?? null
   const argTruncated =
-    argLabel && argLabel.length > 60 ? `${argLabel.slice(0, 57)}…` : argLabel
+    argLabel && argLabel.length > 50 ? `${argLabel.slice(0, 47)}…` : argLabel
 
   const outputText = section.outputText || section.errorText || ''
   const outputSummary = isPending
     ? isStreamingActive
       ? 'running…'
       : 'pending'
-    : summarizeOutput(outputText) || (isDone ? 'done' : 'failed')
+    : summarizeOutput(outputText, 80) || (isDone ? 'done' : 'failed')
 
   const dot = statusDot(section.state, isStreamingActive)
   const color = statusColor(section.state, isStreamingActive)
@@ -137,19 +137,19 @@ function ToolRow({
   const canExpand = hasInputData || hasOutputData
 
   return (
-    <div className="font-mono text-[12px] leading-relaxed">
+    <div className="font-mono text-[11px] leading-tight">
       <button
         type="button"
         onClick={() => canExpand && setOpen((v) => !v)}
         className={cn(
-          'group flex w-full items-baseline gap-2 px-3 py-1.5 text-left rounded-sm',
+          'group flex w-full items-baseline gap-1.5 px-2 py-1 text-left rounded-sm',
           canExpand && 'hover:bg-[color-mix(in_srgb,var(--theme-accent)_8%,transparent)]',
           !canExpand && 'cursor-default',
         )}
       >
         <span
           className={cn(
-            'shrink-0 leading-none',
+            'shrink-0 leading-none text-[10px]',
             isPending && isStreamingActive && 'animate-pulse',
           )}
           style={{ color }}
@@ -157,14 +157,14 @@ function ToolRow({
           {dot}
         </span>
         <span
-          className="shrink-0 font-semibold"
+          className="shrink-0 font-medium text-[10px]"
           style={{ color: 'var(--theme-text)' }}
         >
           {label}
         </span>
         {argTruncated && argTruncated !== label ? (
           <span
-            className="truncate min-w-0 opacity-70"
+            className="truncate min-w-0 opacity-70 text-[9px]"
             style={{ color: 'var(--theme-muted)' }}
           >
             {argTruncated}
@@ -173,7 +173,7 @@ function ToolRow({
         <span className="flex-1" />
         {isPending && isStreamingActive && elapsed > 0 ? (
           <span
-            className="shrink-0 tabular-nums text-[10px] opacity-60"
+            className="shrink-0 tabular-nums text-[9px] opacity-60"
             style={{ color: 'var(--theme-muted)' }}
           >
             {formatElapsed(elapsed)}
@@ -181,7 +181,7 @@ function ToolRow({
         ) : null}
         {canExpand ? (
           <span
-            className="shrink-0 text-[10px] opacity-40"
+            className="shrink-0 text-[9px] opacity-40"
             style={{ color: 'var(--theme-muted)' }}
           >
             {open ? '▾' : '▸'}
@@ -190,7 +190,7 @@ function ToolRow({
       </button>
       {/* Output preview line — TUI-style ⎿ */}
       <div
-        className="flex items-baseline gap-1.5 px-3 pl-7 pb-0.5 opacity-70"
+        className="flex items-baseline gap-1 px-2 pl-6 pb-0.5 opacity-70 text-[10px]"
         style={{ color: isError ? 'var(--theme-danger, #ef4444)' : 'var(--theme-muted)' }}
       >
         <span className="shrink-0 leading-none opacity-50">⎿</span>
@@ -198,7 +198,7 @@ function ToolRow({
       </div>
       {open && canExpand ? (
         <div
-          className="mx-3 mt-2 mb-1 rounded border px-3 py-2 text-[11px]"
+          className="mx-2 mt-1 mb-1 rounded border px-2 py-1.5 text-[10px]"
           style={{
             background: 'var(--code-bg, color-mix(in srgb, var(--theme-card) 70%, transparent))',
             borderColor: 'var(--theme-border)',
@@ -213,7 +213,7 @@ function ToolRow({
                 Input
               </div>
               <pre
-                className="max-h-32 overflow-auto whitespace-pre-wrap break-words rounded font-mono text-[10px]"
+                className="max-h-24 overflow-auto whitespace-pre-wrap break-words rounded font-mono text-[9px]"
                 style={{ color: 'var(--code-foreground, var(--theme-text))' }}
               >
                 {JSON.stringify(section.input, null, 2)}
@@ -221,7 +221,7 @@ function ToolRow({
             </div>
           ) : null}
           {hasOutputData ? (
-            <div className={cn(hasInputData && 'mt-1.5')}>
+            <div className={cn(hasInputData && 'mt-1')}>
               <div
                 className="mb-0.5 font-sans text-[9px] uppercase tracking-widest opacity-50"
                 style={{
@@ -233,7 +233,7 @@ function ToolRow({
                 {isError ? 'Error' : 'Output'}
               </div>
               <pre
-                className="max-h-48 overflow-auto whitespace-pre-wrap break-words rounded font-mono text-[10px]"
+                className="max-h-32 overflow-auto whitespace-pre-wrap break-words rounded font-mono text-[9px]"
                 style={{
                   color: isError
                     ? 'var(--theme-danger, #ef4444)'
@@ -261,6 +261,7 @@ function ThinkingRow({
   isStreaming: boolean
   expandAll?: boolean
 }) {
+  // Start collapsed on mobile for compactness
   const [open, setOpen] = useState(false)
   useEffect(() => {
     if (expandAll) setOpen(true)
@@ -269,15 +270,15 @@ function ThinkingRow({
   const summary = summarizeOutput(thinking) || 'thinking…'
 
   return (
-    <div className="font-mono text-[12px] leading-relaxed">
+    <div className="font-mono text-[11px] leading-tight">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="group flex w-full items-baseline gap-2 px-3 py-1.5 text-left rounded-sm hover:bg-[color-mix(in_srgb,var(--theme-accent)_8%,transparent)]"
+        className="group flex w-full items-baseline gap-1.5 px-2 py-1 text-left rounded-sm hover:bg-[color-mix(in_srgb,var(--theme-accent)_8%,transparent)]"
       >
         <span className="shrink-0 leading-none">💭</span>
         <span
-          className="shrink-0 font-semibold"
+          className="shrink-0 font-medium text-[10px]"
           style={{ color: 'var(--theme-text)' }}
         >
           Thinking
@@ -285,21 +286,21 @@ function ThinkingRow({
         <span className="flex-1" />
         {isStreaming && elapsedSeconds > 0 ? (
           <span
-            className="shrink-0 tabular-nums text-[10px] opacity-60"
+            className="shrink-0 tabular-nums text-[9px] opacity-60"
             style={{ color: 'var(--theme-muted)' }}
           >
             {formatElapsed(elapsedSeconds)}
           </span>
         ) : null}
         <span
-          className="shrink-0 text-[10px] opacity-40"
+          className="shrink-0 text-[9px] opacity-40"
           style={{ color: 'var(--theme-muted)' }}
         >
           {open ? '▾' : '▸'}
         </span>
       </button>
       <div
-        className="flex items-baseline gap-1.5 px-3 pl-7 pb-0.5 opacity-70"
+        className="flex items-baseline gap-1 px-2 pl-6 pb-0.5 opacity-70 text-[10px]"
         style={{ color: 'var(--theme-muted)' }}
       >
         <span className="shrink-0 leading-none opacity-50">⎿</span>
@@ -307,14 +308,14 @@ function ThinkingRow({
       </div>
       {open ? (
         <div
-          className="mx-3 mt-2 mb-1 rounded border px-3 py-2 text-[11px]"
+          className="mx-2 mt-1 mb-1 rounded border px-2 py-1.5 text-[10px]"
           style={{
             background: 'var(--code-bg, color-mix(in srgb, var(--theme-card) 70%, transparent))',
             borderColor: 'var(--theme-border)',
           }}
         >
           <p
-            className="whitespace-pre-wrap text-pretty text-[12px]"
+            className="whitespace-pre-wrap text-[11px] leading-snug"
             style={{ color: 'var(--theme-text)' }}
           >
             {thinking}
@@ -375,7 +376,7 @@ function TuiActivityCardComponent({
       }}
     >
       <div
-        className="flex items-center gap-2 border-b px-4 py-2.5"
+        className="flex items-center gap-2 border-b px-3 py-1.5"
         style={{
           borderColor:
             'color-mix(in srgb, var(--theme-border) 70%, transparent)',
@@ -384,7 +385,7 @@ function TuiActivityCardComponent({
         }}
       >
         <span
-          className="font-mono text-[10px] font-semibold uppercase tracking-[0.14em]"
+          className="font-mono text-[9px] font-semibold uppercase tracking-[0.14em]"
           style={{ color: 'var(--theme-muted)' }}
         >
           {isStreaming ? '⚡ Working' : 'Activity'}
@@ -392,7 +393,7 @@ function TuiActivityCardComponent({
         <span className="flex-1" />
         {summary ? (
           <span
-            className="font-mono text-[10px] tabular-nums"
+            className="font-mono text-[9px] tabular-nums"
             style={{ color: summaryColor }}
           >
             {summary}
@@ -400,12 +401,12 @@ function TuiActivityCardComponent({
         ) : null}
         {isStreaming ? (
           <span
-            className="size-1.5 rounded-full animate-pulse"
+            className="size-1 rounded-full animate-pulse"
             style={{ background: 'var(--theme-accent, #6366f1)' }}
           />
         ) : null}
       </div>
-      <div className="flex flex-col gap-1.5 px-2 py-3">
+      <div className="flex flex-col gap-1 px-1.5 py-2">
         {hasThinking ? (
           <ThinkingRow
             thinking={thinking!}
@@ -426,17 +427,14 @@ function TuiActivityCardComponent({
         ))}
         {isWorkingStub ? (
           <div
-            className="flex items-baseline gap-2 px-3 py-1 font-mono text-[12px] leading-relaxed"
+            className="flex items-baseline gap-1.5 px-2 py-0.5 font-mono text-[11px] leading-tight"
             style={{ color: 'var(--theme-muted)' }}
           >
             <span
-              className="size-1.5 rounded-full animate-pulse"
+              className="size-1 rounded-full animate-pulse"
               style={{ background: 'var(--theme-accent, #6366f1)' }}
             />
-            <span className="opacity-80">working…</span>
-            <span className="opacity-50 text-[10px]">
-              tool activity will appear after the run
-            </span>
+            <span className="opacity-80 text-[10px]">working…</span>
           </div>
         ) : null}
       </div>

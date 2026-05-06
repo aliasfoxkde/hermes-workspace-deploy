@@ -130,7 +130,21 @@ async function tryServeStatic(req, res) {
     res.end(data)
     return true
   } catch {
-    return false
+    // No matching static file — serve index.html as SPA fallback
+    // This lets client-side React Router handle the route
+    try {
+      const indexPath = join(CLIENT_DIR, 'index.html')
+      const data = await readFile(indexPath)
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Length': data.length,
+        'Cache-Control': 'no-cache',
+      })
+      res.end(data)
+      return true
+    } catch {
+      return false
+    }
   }
 }
 

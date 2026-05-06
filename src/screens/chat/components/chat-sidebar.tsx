@@ -13,14 +13,15 @@ import {
   McpServerIcon,
   MessageMultiple01Icon,
   Moon02Icon,
+  Sun02Icon,
   PencilEdit02Icon,
   PuzzleIcon,
   Rocket01Icon,
   Search01Icon,
   Settings01Icon,
-  Sun02Icon,
   UserGroupIcon,
   UserMultipleIcon,
+  ViewAgendaIcon,
 } from '@hugeicons/core-free-icons'
 import { AnimatePresence, motion } from 'motion/react'
 import { memo, useEffect, useMemo, useRef, useState } from 'react'
@@ -568,6 +569,7 @@ function ChatSidebarComponent({
   const isJobsActive = pathname === '/jobs'
   const isMemoryActive = pathname === '/memory'
   const isTasksActive = pathname === '/tasks'
+  const isKanbanActive = pathname === '/kanban'
   const isConductorActive = pathname === '/conductor'
   const isOperationsActive = pathname === '/operations'
   const isSwarmActive = pathname === '/swarm' || pathname === '/swarm2'
@@ -806,6 +808,13 @@ function ChatSidebarComponent({
       icon: CheckListIcon,
       label: t('nav.tasks'),
       active: isTasksActive,
+    },
+    {
+      kind: 'link',
+      to: '/kanban',
+      icon: ViewAgendaIcon,
+      label: 'Kanban',
+      active: isKanbanActive,
     },
     {
       kind: 'link',

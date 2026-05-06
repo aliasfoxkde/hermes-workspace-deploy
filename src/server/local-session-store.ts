@@ -100,6 +100,23 @@ export function touchLocalSession(sessionId: string): void {
   if (session) session.updatedAt = Date.now()
 }
 
+/**
+ * Returns the session title if set, otherwise derives one from the first
+ * user message in the session (truncated to ~50 chars, cleaned up).
+ */
+export function getOrDeriveTitle(sessionId: string): string {
+  const session = store.sessions[sessionId]
+  if (session?.title) return session.title
+
+  const messages = store.messages[sessionId] ?? []
+  const firstUser = messages.find((m) => m.role === 'user')
+  if (!firstUser) return 'Local Chat'
+
+  // Strip newlines / extra spaces, truncate
+  const raw = firstUser.content.replace(/\s+/g, ' ').trim()
+  return raw.length > 50 ? raw.slice(0, 47) + '…' : raw
+}
+
 export function deleteLocalSession(sessionId: string): void {
   delete store.sessions[sessionId]
   delete store.messages[sessionId]

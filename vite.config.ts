@@ -1,10 +1,11 @@
 import { URL, fileURLToPath } from 'node:url'
 import { execSync, spawn } from 'node:child_process'
 import type { ChildProcess } from 'node:child_process'
-import { copyFileSync, existsSync, mkdirSync } from 'node:fs'
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import net from 'node:net'
 import { resolve, dirname } from 'node:path'
 import os from 'node:os'
+import zlib from 'node:zlib'
 
 // devtools removed
 import { tanstackStart } from '@tanstack/react-start/plugin/vite'
@@ -733,7 +734,38 @@ const config = defineConfig(({ mode, command }) => {
           return result
         },
       },
-      // Copy pty-helper.py into the server assets directory after build
+      // Brotli pre-compress build artifacts so Caddy serves them directly.
+      // Cloudflare Tunnel decompresses gzip/zstd transparently, but passes
+      // Brotli through unchanged — this ensures compressed assets reach browsers.
+      {
+        name: 'vite-plugin-brotli-compress',
+        apply: 'build',
+        closeBundle() {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const assetsDir = resolve('dist/client/assets')
+          if (!existsSync(assetsDir)) return
+          const exts = ['.js', '.css']
+          let count = 0
+          const compressFile = (filePath: string) => {
+            try {
+              const input = readFileSync(filePath)
+              const brotliFile = filePath + '.br'
+              const compressed = zlib.brotliCompressSync(input)
+              writeFileSync(brotliFile, compressed)
+              count++
+            } catch { /* skip files that fail to compress */ }
+          }
+          const walk = (dir: string) => {
+            for (const entry of readdirSync(dir, { withFileTypes: true })) {
+              const full = resolve(dir, entry.name)
+              if (entry.isDirectory()) walk(full)
+              else if (entry.isFile() && exts.some(e => entry.name.endsWith(e))) compressFile(full)
+            }
+          }
+          walk(assetsDir)
+          console.log(`[brotli] Pre-compressed ${count} assets`)
+        },
+      },
       {
         name: 'copy-pty-helper',
         closeBundle() {
