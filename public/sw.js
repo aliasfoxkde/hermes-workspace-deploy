@@ -1,6 +1,6 @@
 // Hermes Workspace Service Worker
 // Hermes SW v2 — stale-while-revalidate caching, auto-update on redeploy
-const CACHE_NAME = 'hermes-ws-v2';   // bump to 'v3' on each redeploy to force cache refresh
+const CACHE_NAME = 'hermes-ws-v3';   // bump to 'v4' on each redeploy to force cache refresh
 const PRECACHE_ASSETS = [
   '/',
   '/manifest.json',
